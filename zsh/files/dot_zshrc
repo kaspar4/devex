@@ -1,0 +1,30 @@
+source ~/.antigen.zsh
+
+# Load the oh-my-zsh's library.
+antigen use oh-my-zsh
+
+# Bundles from the default repo (robbyrussell's oh-my-zsh).
+antigen bundle git
+antigen bundle bazel
+antigen bundle debian
+antigen bundle ansible
+antigen bundle common-aliases
+antigen bundle terraform
+antigen bundle pip
+antigen bundle lein
+antigen bundle command-not-found
+antigen bundle "MichaelAquilina/zsh-you-should-use"
+
+#plugins=(bazel git debian docker battery emoji-clock kubectl alias-tips ansible assume-role)
+
+# Syntax highlighting bundle.
+antigen bundle zsh-users/zsh-syntax-highlighting
+
+# Load the theme.
+antigen theme robbyrussell
+
+# Tell Antigen that you're done.
+antigen apply
+
+eval "$(oh-my-posh init zsh --config ~/.poshthemes/atomic.omp.json )"
+eval "$(direnv hook zsh)"

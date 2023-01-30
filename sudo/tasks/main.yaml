@@ -1,0 +1,7 @@
+- name: Configuring sudoer access
+  community.general.sudoers:
+    name: allow-all-sudo
+    state: present
+    user: "mav"
+    commands: ALL
+    nopassword: true

@@ -1,0 +1,77 @@
+---
+- name: Install zsh (with dependencies)
+  apt:
+    name={{ item }}
+    state=present
+    update_cache=yes
+  with_items:
+    - git
+    - curl
+    - zsh
+
+# - name: set up zsh for user
+#   become: no
+#   vars:
+#     the_user: "{{ ansible_user_id }}"
+#   tasks:
+#     - name: change user shell to zsh 
+#       become: yes
+#       user:
+#         name: "{{ the_user }}"
+#         shell: /usr/bin/zsh
+
+- name: Install oh-my-posh
+  get_url:
+    url: https://git.io/antigen
+    dest: "{{ home_dir }}/.antigen.zsh"
+    mode: "0755"
+
+- name: Copy .zshrc
+  ansible.builtin.copy:
+    src: files/dot_zshrc
+    dest: "{{ home_dir }}/.zshrc"
+
+- name: set default shell
+  user:
+    name: "{{ ansible_user_id }}"
+    shell: "/usr/bin/zsh"
+    
+  
+# - name: Install oh-my-zsh
+#   git:
+#     repo: https://github.com/robbyrussell/oh-my-zsh
+#     dest: ~/.oh-my-zsh force=yes
+#     single_branch: yes
+#     version: master
+
+- name: Back up existing ~/.zshrc
+  shell: if [ -f ~/.zshrc ]; then mv ~/.zshrc ~/.zshrc.bak ; fi
+
+- name: Back up existing ~/.zsh_aliases
+  shell: if [ -f ~/.zsh_aliases ]; then mv ~/.zsh_aliases ~/.zsh_aliases.bak ; fi
+
+# - name: Copy my .zshrc
+#   command: curl -LSso ~/.zshrc https://raw.github.com/ChengLong/configs/master/.zshrc 
+    
+- name: clone oh-my-zsh
+  tags:
+    # Suppress warning: [ANSIBLE0006] git used in place of git module
+    # Git module doesn't allow us to set `core.autocrlf=input`.
+    - skip_ansible_lint
+  become: yes
+  become_user: '{{ ansible_user_id }}'
+  # core.autocrlf=input prevents https://github.com/ohmyzsh/ohmyzsh/issues/4402
+  command: 'git clone -c core.autocrlf=input --depth=1 https://github.com/ohmyzsh/ohmyzsh.git .oh-my-zsh'
+  args:
+    chdir: '~{{ ansible_user_id }}'
+    creates: '~{{ ansible_user_id }}/.oh-my-zsh'
+
+- name: set permissions of oh-my-zsh
+  become: yes
+  file:
+    path: '~{{ ansible_user_id }}/.oh-my-zsh'
+    # Prevent the cloned repository from having insecure permissions. Failing to do
+    # so causes compinit() calls to fail with "command not found: compdef" errors
+    # for users with insecure umasks (e.g., "002", allowing group writability).
+    mode: 'go-w'
+    recurse: yes

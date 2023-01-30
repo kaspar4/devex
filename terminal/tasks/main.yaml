@@ -1,0 +1,93 @@
+- name: Install the tilix terminal emulator
+  tags:
+    - dependency
+    - terminal-emulator
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: latest
+  vars:
+    packages:
+    - tilix
+
+- name: Copy tilix config
+  ansible.builtin.copy:
+    src: files/tilix.dconf
+    dest: "{{ home_dir }}/tilix.dconf"
+
+- name: Copy tilix desktop
+  ansible.builtin.copy:
+    src: files/tilix.desktop
+    dest: "{{ home_dir }}/Desktop/tilix.desktop"
+    
+- name: Install oh-my-posh
+  get_url:
+    url: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64
+    dest: /usr/local/bin/oh-my-posh
+    mode: "0755"
+
+- name: ensure posh themes directory exists
+  file:
+    path: "{{ home_dir }}/.poshthemes"
+    state: directory
+    
+- name: Install oh my posh themes
+  unarchive:
+    src: https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip
+    dest: "{{ home_dir }}/.poshthemes"
+    creates: "{{ home_dir }}/.poshthemes/atomic.omp.json"
+    owner: "{{ ansible_user_id }}"
+    group: "{{ ansible_user_id }}"
+    mode: "0644"
+    remote_src: yes
+  
+- name: Install font 
+  shell: "{{ home_dir }}/nerd-fonts/install.sh Meslo"
+  become: yes
+  become_user: '{{ ansible_user_id }}'
+  args:
+    creates: "{{ home_dir }}/.local/share/fonts/NerdFonts/Meslo LG M Regular Nerd Font Complete.ttf"
+
+- name: Rehash font cache
+  command: fc-cache -fv
+
+- name: Configure tilix
+  shell: "dconf load /com/gexperts/Tilix/ < {{ home_dir }}/tilix.dconf"
+  become: yes
+  become_user: '{{ ansible_user_id }}'
+
+#  ansible.builtin.shell: {{ home_dir }}/nerd-fonts/install.sh Meslo
+
+# needs to run
+#    sudo fc-cache -fv
+
+# - name: Configure tilix
+#   ansible.builtin.shell: dconf load /com/gexperts/Tilix/ < {{ home_dir }}/tilix.dconf
+
+# dump config once satisfied
+#   dconf dump /com/gexperts/Tilix/ > tilix.dconf
+# load config
+#   dconf load /com/gexperts/Tilix/ < tilix.dconf
+
+
+# ZSH
+#
+# should probably use antigen
+
+# https://github.com/djui/alias-tips
+#
+# cd ${ZSH_CUSTOM1:-$ZSH/custom}/plugins
+# wget https://github.com/djui/alias-tips/archive/master.zip
+# unzip master.zip && mv alias-tips-master alias-tips && rm master.zip
+#
+# $EDITOR ~/.zshrc
+# -plugins=(...)
+# +plugins=(... alias-tips)
+
+# https://github.com/sparsick/ansible-zsh
+#
+# cd $ZSH/custom/plugins
+# git clone https://github.com/sparsick/ansible-zsh ansible
+# plugins=(git git-extras history mvn web-search ansible)
+
+# git clone https://github.com/weizard/assume-role.git ~/.oh-my-zsh/plugins/assume-role
+# plugins=(... assume-role)

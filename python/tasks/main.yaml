@@ -1,0 +1,12 @@
+- name: Install pip for python 3
+  ansible.builtin.apt:
+    pkg:
+        - python3-pip
+        - python3-dev
+    state: latest
+    update_cache: true
+
+- name: Install python-is-python3 (symlinks /usr/bin/python to python3)
+  ansible.builtin.apt:
+    pkg: python-is-python3
+    state: latest

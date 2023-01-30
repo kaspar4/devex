@@ -1,0 +1,29 @@
+---
+- name: Ansible Playbook to setup a new laptop
+  hosts: laptop,localhost
+  vars:
+    home_dir: "{{ lookup('env', 'HOME') }}"
+    linux_user: "{{ lookup('env', 'USER') }}"
+  tasks:
+    - name: Configuring sudoer access
+  roles:
+    - { role: sudo, become: yes }
+  #   - { role: api, become: yes, tags: [ 'api', 'development' ] }
+  #   - { role: browsers, become: yes, tags: [ 'browser' ] }
+  #   - { role: cloud, become: yes, tags: [ 'cloud' ] }
+  #   - { role: common, become: yes, tags: [ 'common' ] }
+  #   - { role: containers, become: yes, tags: [ 'development', 'container' ] }
+  #   - { role: databases, become: yes, tags: [ 'development', 'database' ] }
+    - { role: fonts, tags: [ 'font' ] }
+  #   - { role: git, become: yes, tags: [ 'git' ] }
+  #   - { role: graphics, become: yes, tags: [ 'graphics' ] }
+  #   - { role: java, become: yes, tags: [ 'development', 'java' ] }
+  #  - { role: multimedia, become: yes, tags: [ 'audio', 'multimedia', 'video' ] }
+  #   - { role: nodejs, become: yes, tags: [ 'development', 'js', 'node' ] }
+  #   - { role: productivity, become: yes, tags: [ 'productivity' ] }
+    - { role: python, become: yes, tags: [ 'development', 'python' ] }
+    - { role: terminal, become: yes, tags: [ 'terminal' ] }
+    - { role: zsh, become: yes, tags: [ 'terminal' ] }
+    - { role: kubernetes, become: yes, tags: [ 'kubernetes' ] }
+  tasks:
+    - debug: msg="You are the user {{ lookup('env','USER') }}"
