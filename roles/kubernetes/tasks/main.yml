@@ -1,3 +1,97 @@
 ---
-# tasks file for kubernetes
 
+#############################################################################
+## should be in a docker role
+#############################################################################
+
+- name: Extract distribution base name (works on linux mint as well)
+  command: grep -oP '{{ "VERSION" if ansible_distribution == "Debian" else "UBUNTU" }}_CODENAME=\K.*' /etc/os-release
+  register: distro
+  changed_when: False
+  
+- name: Add specified repository into sources list
+  ansible.builtin.apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ distro.stdout }} stable
+    state: present
+
+- name: Add gpg signing key for socker repository
+  ansible.builtin.apt_key:
+    url: "https://download.docker.com/linux/ubuntu/gpg"
+    state: present
+
+- name: Install Docker
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - python3-docker # required by ansible docker modules
+
+- name: Create docker group
+  group:
+    name: docker
+
+# TODO: either find a way to make the group effective or a way to tell the user they need to logout
+- name: Allow running Docker without sudo
+  user:
+    name: "{{ ansible_user_id }}"
+    groups: docker
+    append: yes
+
+#############################################################################
+# Local kubernetes cluster    
+#############################################################################
+- name: Installing kind
+  get_url:
+    url: https://kind.sigs.k8s.io/dl/{{ kind_version}}/kind-linux-amd64
+    dest: /usr/local/bin/kind
+    mode: '0755'
+
+#############################################################################
+# utilities
+#############################################################################
+- name: Download kubectl binary
+  ansible.builtin.get_url:
+    url: "https://storage.googleapis.com/kubernetes-release/release/v{{ kubectl_version }}/bin/linux/amd64/kubectl"
+    dest: "/usr/local/bin/kubectl"
+    mode: 0755
+
+- name: Unarchive a file that needs to be downloaded (added in 2.0)
+  unarchive:
+    src: https://github.com/kubernetes-sigs/krew/releases/download/v0.4.3/krew-linux_amd64.tar.gz
+    dest: /usr/local/bin
+    mode: 0755
+    remote_src: yes
+# TODO: not available in ansible 2.10. For now accept we also extract LICENSE in /usr/local/bin
+#    include:
+#      - krew-linux_amd64
+
+- name: Create a symbolic link
+  ansible.builtin.file:
+    src: /usr/local/bin/krew-linux_amd64
+    dest: /usr/local/bin/kubectl-krew
+    state: link
+
+# TODO add export PATH="${PATH}:${HOME}/.krew/bin"
+- name: Install Krew plugins
+  shell: "kubectl krew install {{ item }}"
+  become: yes
+  become_user: '{{ ansible_user_id }}'
+  with_items:
+    - ns
+    - ctx
+    - example
+    - flame
+    - explore
+    - get-all
+    - graph
+    - neat
+    - pod-inspect
+    - pod-lens
+    - prune-unused
+    - stern
+    - view-secret
+    - whoami
+    

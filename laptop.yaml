@@ -5,7 +5,9 @@
     home_dir: "{{ lookup('env', 'HOME') }}"
     linux_user: "{{ lookup('env', 'USER') }}"
   tasks:
-    - name: Configuring sudoer access
+    - name: Check ansible version
+      assert:
+        that: 1
   roles:
     - { role: sudo, become: yes }
   #   - { role: api, become: yes, tags: [ 'api', 'development' ] }
